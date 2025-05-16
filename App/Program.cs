@@ -45,14 +45,24 @@ class Program
                 string message = reader.ReadLine();
                 if (message == null) break;
 
-                Console.WriteLine($"{name}: {message}");
-                Broadcast($"{name}: {message}");
+                if (message.StartsWith("@"))
+                {
+                    // Private message format: @recipient message
+                    int spaceIndex = message.IndexOf(' ');
+                    if (spaceIndex > 1)
+                    {
+                        string recipient = message.Substring(1, spaceIndex - 1);
+                        string actualMessage = message.Substring(spaceIndex + 1);
+                        SendPrivateMessage(recipient, $"{name} (private): {actualMessage}");
+                    }
+                }
+                else
+                {
+                    Broadcast($"{name}: {message}");
+                }
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error with {name}: {ex.Message}");
-        }
+        catch { }
 
         lock (clients)
         {
@@ -60,6 +70,23 @@ class Program
         }
         Console.WriteLine($"{name} disconnected. Total clients: {clients.Count}");
     }
+
+    static void SendPrivateMessage(string recipient, string message)
+    {
+        lock (clients)
+        {
+            if (clients.TryGetValue(recipient, out var client))
+            {
+                try
+                {
+                    var writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
+                    writer.WriteLine(message);
+                }
+                catch { }
+            }
+        }
+    }
+
 
 
     static void Broadcast(string message)
