@@ -19,9 +19,8 @@ class Program
         {
             var client = listener.AcceptTcpClient();
             var stream = client.GetStream();
-            var buffer = new byte[1024];
-            int bytesRead = stream.Read(buffer, 0, buffer.Length);
-            string name = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
+            var reader = new StreamReader(stream, Encoding.UTF8);
+            string name = reader.ReadLine();
 
             lock (clients)
             {
@@ -37,20 +36,23 @@ class Program
     static void HandleClient(string name, TcpClient client)
     {
         var stream = client.GetStream();
-        var buffer = new byte[1024];
+        var reader = new StreamReader(stream, Encoding.UTF8);
+
         try
         {
             while (true)
             {
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                if (bytesRead == 0) break;
-                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
+                string message = reader.ReadLine();
+                if (message == null) break;
 
                 Console.WriteLine($"{name}: {message}");
                 Broadcast($"{name}: {message}");
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error with {name}: {ex.Message}");
+        }
 
         lock (clients)
         {
@@ -59,9 +61,11 @@ class Program
         Console.WriteLine($"{name} disconnected. Total clients: {clients.Count}");
     }
 
+
     static void Broadcast(string message)
     {
-        byte[] data = Encoding.UTF8.GetBytes(message);
+        byte[] data = Encoding.UTF8.GetBytes(message + "\n"); // Append newline
+
         lock (clients)
         {
             foreach (var client in clients.Values)
