@@ -11,7 +11,7 @@ class Program
 
     static void Main()
     {
-        var listener = new TcpListener(IPAddress.Any, 5000);
+        var listener = new TcpListener(IPAddress.Any, 36929);
         listener.Start();
         Console.WriteLine("Server started. Waiting for clients...");
 
