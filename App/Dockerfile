@@ -1,4 +1,4 @@
-﻿# Build stage using .NET 9 SDK
+﻿# Use .NET 9 SDK for build
 FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
 WORKDIR /app
 
@@ -6,14 +6,15 @@ WORKDIR /app
 COPY *.csproj ./
 RUN dotnet restore
 
-# Copy everything else and publish
+# Copy the rest of the code and build
 COPY . ./
 RUN dotnet publish -c Release -o /out
 
-# Runtime stage using .NET 9 runtime
+# Use .NET 9 runtime for final image
 FROM mcr.microsoft.com/dotnet/runtime:9.0-preview
 WORKDIR /app
 COPY --from=build /out .
 
 EXPOSE 5000
-ENTRYPOINT ["dotnet", "ChatTcpServer.dll"]
+ENTRYPOINT ["dotnet", "App.dll"]  
+# Replace 'App.dll' with your actual DLL name if different
